@@ -1,8 +1,11 @@
 package com.sistemas.integradobackend.postgres.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name="users")
@@ -16,6 +19,19 @@ public class User implements Serializable {
     private String email;
     private  String username;
     private String password;
+    @JsonIgnoreProperties({"handler","hibernateLazyInitializer"})
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name="users_roles",
+            joinColumns ={@JoinColumn(name="user_id")},
+            inverseJoinColumns = @JoinColumn(name = "role_id"),
+            uniqueConstraints = {@UniqueConstraint(columnNames={"user_id","role_id"})}
+    )
+    private List<Role> roles;
+
+    public User(){
+        this.roles = new ArrayList<>();
+    }
 
     public Long getId() {
         return id;
@@ -63,5 +79,13 @@ public class User implements Serializable {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public List<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<Role> roles) {
+        this.roles = roles;
     }
 }
