@@ -3,14 +3,14 @@ package com.sistemas.integradobackend.postgres.controllers;
 
 import com.sistemas.integradobackend.postgres.entities.User;
 import com.sistemas.integradobackend.postgres.services.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/users")
@@ -33,11 +33,19 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<User> create(@RequestBody User user) {
+    public ResponseEntity<?> create(@Valid @RequestBody User user, BindingResult result) {
+        if(result.hasErrors()) {
+            return validation(result);
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(service.save(user));
     }
+
+
     @PostMapping("/{id}")
-    public ResponseEntity<User> update(@PathVariable Long id, @RequestBody User user){
+    public ResponseEntity<?> update(@Valid @RequestBody User user, BindingResult result, @PathVariable Long id){
+        if(result.hasErrors()) {
+            return validation(result);
+        }
         Optional<User> userOptional=service.findById(id);
         if(userOptional.isPresent()){
             User userDb=userOptional.get();
@@ -60,6 +68,13 @@ public class UserController {
         }
         return ResponseEntity.noContent().build();
 
+    }
+    private static ResponseEntity<Map<String, String>> validation(BindingResult result) {
+        Map<String, String> errors = new HashMap<>();
+        result.getFieldErrors().forEach(error ->{
+            errors.put(error.getField(), "El campo"+error.getField()+" "+error.getDefaultMessage());
+        });
+        return ResponseEntity.badRequest().body(errors);
     }
 
 }
